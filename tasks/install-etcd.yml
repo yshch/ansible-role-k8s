@@ -1,0 +1,17 @@
+---
+
+- name: create etcd data directory
+  ansible.builtin.file:
+    path: /var/lib/etcd
+    state: directory
+    owner: root
+    group: root
+    mode: 0600
+
+- name: install etcd static pod manifest
+  ansible.builtin.template:
+    src: etc/kubernetes/manifests/etcd.yaml.j2
+    dest: /etc/kubernetes/manifests/etcd.yaml
+    owner: root
+    group: root
+    mode: 0644

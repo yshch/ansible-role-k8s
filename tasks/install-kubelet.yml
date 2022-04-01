@@ -1,0 +1,64 @@
+---
+
+- name: create kubelet systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/kubelet.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: install kubelet systemd drop-in file
+  ansible.builtin.template:
+    src: etc/systemd/system/kubelet.service.d/10-custom.conf.j2
+    dest: /etc/systemd/system/kubelet.service.d/10-custom.conf
+    owner: root
+    group: root
+    mode: 0600
+  notify:
+    - reload systemd
+    - restart kubelet
+
+- name: create kubelet data directory
+  ansible.builtin.file:
+    path: /var/lib/kubelet
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+
+- name: install kubelet config file
+  ansible.builtin.template:
+    src: var/lib/kubelet/config.yaml.j2
+    dest: /var/lib/kubelet/config.yaml
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart kubelet
+
+- name: pin kubelet package version
+  ansible.builtin.template:
+    src: etc/apt/preferences.d/kubelet.j2
+    dest: /etc/apt/preferences.d/kubelet
+    owner: root
+    group: root
+    mode: 0644
+
+- name: install kubelet package
+  ansible.builtin.apt:
+    name:
+      - kubelet={{ k8s_version }}-*
+    state: present
+    update_cache: true
+    cache_valid_time: 86400
+  notify:
+    - reload systemd
+    - restart kubelet
+
+- name: enable and start kubelet service
+  ansible.builtin.service:
+    name: kubelet
+    enabled: true
+    state: started

@@ -1,0 +1,7 @@
+#jinja2: trim_blocks:True, lstrip_blocks:True
+[Service]
+Environment="KUBELET_KUBECONFIG_ARGS=--kubeconfig=/etc/kubernetes/kubelet.conf"
+Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
+Environment="KUBELET_CUSTOM_ARGS=--network-plugin=cni --pod-infra-container-image=k8s.gcr.io/pause:3.2"
+ExecStart=
+ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_CUSTOM_ARGS

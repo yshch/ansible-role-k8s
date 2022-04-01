@@ -1,0 +1,17 @@
+---
+
+- name: pin kubectl package version
+  ansible.builtin.template:
+    src: etc/apt/preferences.d/kubectl.j2
+    dest: /etc/apt/preferences.d/kubectl
+    owner: root
+    group: root
+    mode: 0644
+
+- name: install kubectl package
+  ansible.builtin.apt:
+    name:
+      - kubectl={{ k8s_version }}-*
+    state: present
+    update_cache: true
+    cache_valid_time: 86400

@@ -1,0 +1,9 @@
+---
+
+- name: install kube-apiserver static pod manifest
+  ansible.builtin.template:
+    src: etc/kubernetes/manifests/kube-apiserver.yaml.j2
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    owner: root
+    group: root
+    mode: 0644

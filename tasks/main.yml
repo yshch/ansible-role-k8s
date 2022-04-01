@@ -1,0 +1,32 @@
+---
+
+- include: preflight.yml
+  tags: always
+- include: configure-node.yml
+- include: configure-apt.yml
+
+- include: pki-ca.yml
+  become: false
+  delegate_to: localhost
+  run_once: true
+
+- include: pki-certificates-common.yml
+- include: pki-certificates-control-plane.yml
+  when: k8s_node_role == "control-plane"
+- include: pki-kubeconfig-common.yml
+- include: pki-kubeconfig-control-plane.yml
+  when: k8s_node_role == "control-plane"
+
+- include: install-kubectl.yml
+- include: install-kubelet.yml
+
+- include: install-etcd.yml
+  when: k8s_node_role == "control-plane"
+  tags:
+    - etcd
+- include: install-kube-apiserver.yml
+  when: k8s_node_role == "control-plane"
+- include: install-kube-controller-manager.yml
+  when: k8s_node_role == "control-plane"
+- include: install-kube-scheduler.yml
+  when: k8s_node_role == "control-plane"

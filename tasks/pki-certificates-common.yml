@@ -1,0 +1,38 @@
+---
+
+- name: install CA certificate
+  ansible.builtin.copy:
+    content: "{{ _k8s_pki_ca_crt }}"
+    dest: "{{ k8s_pki_directory }}/ca.crt"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: generate kubelet privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/kubelet.key"
+    size: 2048
+- name: generate kubelet csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/kubelet.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/kubelet.key"
+    common_name: "{{ ansible_hostname }}"
+    use_common_name_for_san: false
+    subject_alt_name:
+      - "DNS:{{ ansible_hostname }}"
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Server Authentication
+- name: generate kubelet certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/kubelet.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/kubelet.key"
+    csr_path: "{{ k8s_pki_directory }}/kubelet.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"

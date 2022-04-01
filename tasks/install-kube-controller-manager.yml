@@ -1,0 +1,9 @@
+---
+
+- name: install kube-controller-manager static pod manifest
+  ansible.builtin.template:
+    src: etc/kubernetes/manifests/kube-controller-manager.yaml.j2
+    dest: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    owner: root
+    group: root
+    mode: 0644

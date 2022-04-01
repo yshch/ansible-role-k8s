@@ -1,0 +1,5 @@
+---
+
+k8s_cluster_name: test
+k8s_version: 1.21.6
+k8s_etcd_version: 3.4.13-0

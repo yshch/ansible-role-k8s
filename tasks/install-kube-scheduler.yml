@@ -1,0 +1,9 @@
+---
+
+- name: install kube-scheduler static pod manifest
+  ansible.builtin.template:
+    src: etc/kubernetes/manifests/kube-scheduler.yaml.j2
+    dest: /etc/kubernetes/manifests/kube-scheduler.yaml
+    owner: root
+    group: root
+    mode: 0644

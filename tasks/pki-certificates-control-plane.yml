@@ -1,0 +1,268 @@
+---
+
+- name: install CA privatekey
+  ansible.builtin.copy:
+    content: "{{ _k8s_pki_ca_key }}"
+    dest: "{{ k8s_pki_directory }}/ca.key"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: install etcd CA privatekey
+  ansible.builtin.copy:
+    content: "{{ _k8s_pki_ca_etcd_key }}"
+    dest: "{{ k8s_pki_directory }}/etcd/ca.key"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: install etcd CA certificate
+  ansible.builtin.copy:
+    content: "{{ _k8s_pki_ca_etcd_crt }}"
+    dest: "{{ k8s_pki_directory }}/etcd/ca.crt"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: install front-proxy CA privatekey
+  ansible.builtin.copy:
+    content: "{{ _k8s_pki_ca_front_proxy_key }}"
+    dest: "{{ k8s_pki_directory }}/front-proxy-ca.key"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: install front-proxy CA certificate
+  ansible.builtin.copy:
+    content: "{{ _k8s_pki_ca_front_proxy_crt }}"
+    dest: "{{ k8s_pki_directory }}/front-proxy-ca.crt"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: generate apiserver privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/apiserver.key"
+    size: 2048
+- name: generate apiserver csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/apiserver.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/apiserver.key"
+    common_name: kube-apiserver
+    use_common_name_for_san: false
+    subject_alt_name:
+      - "DNS:{{ ansible_hostname }}"
+      - "DNS:kubernetes"
+      - "DNS:kubernetes.default"
+      - "DNS:kubernetes.default.svc"
+      - "DNS:kubernetes.default.svc.cluster.local"
+      - "IP:10.96.0.1"
+      - "IP:{{ _k8s_node_address }}" # instance
+      - "IP:{{ k8s_api_endpoint }}" # balancer
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Server Authentication
+- name: generate apiserver certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/apiserver.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/apiserver.key"
+    csr_path: "{{ k8s_pki_directory }}/apiserver.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate apiserver-kubelet-client privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/apiserver-kubelet-client.key"
+    size: 2048
+- name: generate apiserver-kubelet-client csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/apiserver-kubelet-client.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/apiserver-kubelet-client.key"
+    common_name: kube-apiserver-kubelet-client
+    use_common_name_for_san: false
+    subject:
+      O: system:masters
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Client Authentication
+- name: generate apiserver-kubelet-client certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/apiserver-kubelet-client.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/apiserver-kubelet-client.key"
+    csr_path: "{{ k8s_pki_directory }}/apiserver-kubelet-client.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate apiserver-etcd-client privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/apiserver-etcd-client.key"
+    size: 2048
+- name: generate apiserver-etcd-client csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/apiserver-etcd-client.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/apiserver-etcd-client.key"
+    common_name: kube-apiserver-etcd-client
+    use_common_name_for_san: false
+    subject:
+      O: system:masters
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Client Authentication
+- name: generate apiserver-etcd-client certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/apiserver-etcd-client.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/apiserver-etcd-client.key"
+    csr_path: "{{ k8s_pki_directory }}/apiserver-etcd-client.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_etcd_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_etcd_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate front-proxy-client privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/front-proxy-client.key"
+    size: 2048
+- name: generate front-proxy-client csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/front-proxy-client.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/front-proxy-client.key"
+    common_name: front-proxy-client
+    use_common_name_for_san: false
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Client Authentication
+- name: generate front-proxy-client certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/front-proxy-client.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/front-proxy-client.key"
+    csr_path: "{{ k8s_pki_directory }}/front-proxy-client.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_front_proxy_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_front_proxy_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate etcd-server privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/etcd/server.key"
+    size: 2048
+- name: generate etcd-server csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/etcd/server.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/etcd/server.key"
+    common_name: "{{ ansible_hostname }}"
+    use_common_name_for_san: false
+    subject_alt_name:
+      - "DNS:{{ ansible_hostname }}"
+      - "DNS:localhost"
+      - "IP:127.0.0.1"
+      - "IP:0:0:0:0:0:0:0:1"
+      - "IP:{{ _k8s_node_address }}" # instance
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Client Authentication
+      - TLS Web Server Authentication
+- name: generate etcd-server certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/etcd/server.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/etcd/server.key"
+    csr_path: "{{ k8s_pki_directory }}/etcd/server.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_etcd_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_etcd_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate etcd-peer privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/etcd/peer.key"
+    size: 2048
+- name: generate etcd-peer csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/etcd/peer.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/etcd/peer.key"
+    common_name: "{{ ansible_hostname }}"
+    use_common_name_for_san: false
+    subject_alt_name:
+      - "DNS:{{ ansible_hostname }}"
+      - "DNS:localhost"
+      - "IP:127.0.0.1"
+      - "IP:0:0:0:0:0:0:0:1"
+      - "IP:{{ _k8s_node_address }}" # instance
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Client Authentication
+      - TLS Web Server Authentication
+- name: generate etcd-peer certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/etcd/peer.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/etcd/peer.key"
+    csr_path: "{{ k8s_pki_directory }}/etcd/peer.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_etcd_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_etcd_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate etcd-healthcheck-client privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/etcd/healthcheck-client.key"
+    size: 2048
+- name: generate etcd-healthcheck-client csr
+  community.crypto.openssl_csr:
+    path: "{{ k8s_pki_directory }}/etcd/healthcheck-client.csr"
+    privatekey_path: "{{ k8s_pki_directory }}/etcd/healthcheck-client.key"
+    common_name: kube-etcd-healthcheck-client
+    use_common_name_for_san: false
+    subject:
+      O: system:masters
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - TLS Web Client Authentication
+- name: generate etcd-healthcheck-client certificate
+  community.crypto.x509_certificate:
+    path: "{{ k8s_pki_directory }}/etcd/healthcheck-client.crt"
+    privatekey_path: "{{ k8s_pki_directory }}/etcd/healthcheck-client.key"
+    csr_path: "{{ k8s_pki_directory }}/etcd/healthcheck-client.csr"
+    provider: ownca
+    ownca_content: "{{ _k8s_pki_ca_etcd_crt }}"
+    ownca_privatekey_content: "{{ _k8s_pki_ca_etcd_key }}"
+    ownca_create_subject_key_identifier: never_create
+    ownca_not_after: "+730d"
+
+- name: generate sa privatekey
+  community.crypto.openssl_privatekey:
+    path: "{{ k8s_pki_directory }}/sa.key"
+    size: 2048
+- name: generate sa publickey
+  community.crypto.openssl_publickey:
+    path: "{{ k8s_pki_directory }}/sa.pub"
+    privatekey_path: "{{ k8s_pki_directory }}/sa.key"

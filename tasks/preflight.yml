@@ -1,0 +1,25 @@
+---
+
+- name: gather facts
+  setup:
+    filter:
+      - "ansible_hostname"
+      - "ansible_default-*"
+
+- name: set facts
+  ansible.builtin.set_fact:
+    _k8s_pki_ca_crt: "{{ lookup('ansible.builtin.file', 'files/k8s-' + k8s_cluster_name + '/ca.crt') }}"
+    _k8s_pki_ca_key: "{{ lookup('ansible.builtin.file', 'files/k8s-' + k8s_cluster_name + '/ca.key') }}"
+    _k8s_pki_ca_etcd_crt: "{{ lookup('ansible.builtin.file', 'files/k8s-' + k8s_cluster_name + '/etcd/ca.crt') }}"
+    _k8s_pki_ca_etcd_key: "{{ lookup('ansible.builtin.file', 'files/k8s-' + k8s_cluster_name + '/etcd/ca.key') }}"
+    _k8s_pki_ca_front_proxy_crt: "{{ lookup('ansible.builtin.file', 'files/k8s-' + k8s_cluster_name + '/front-proxy-ca.crt') }}"
+    _k8s_pki_ca_front_proxy_key: "{{ lookup('ansible.builtin.file', 'files/k8s-' + k8s_cluster_name + '/front-proxy-ca.key') }}"
+    _k8s_node_address: "{{ ansible_default_ipv4['address'] }}"
+    _k8s_control_plane_nodes: "{{
+      hostvars
+      | dict2items
+      | selectattr('value.k8s_api_endpoint', 'defined')
+      | selectattr('value.k8s_api_endpoint', 'equalto', hostvars[inventory_hostname]['k8s_api_endpoint'])
+      | selectattr('value.k8s_api_port', 'defined')
+      | selectattr('value.k8s_api_port', 'equalto', hostvars['test-k8s-master-1']['k8s_api_port'])
+    }}"

@@ -1,0 +1,42 @@
+---
+
+- name: remove swap from fstab
+  ansible.posix.mount:
+    name: "{{ item }}"
+    fstype: swap
+    state: absent
+  loop:
+    - swap
+    - none
+
+- name: disable swap
+  ansible.builtin.command:
+    cmd: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: create kubernetes configuration directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - /etc/kubernetes
+    - /etc/kubernetes/manifests
+
+- name: create kubernetes pki directories
+  ansible.builtin.file:
+    path: /etc/kubernetes/pki
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create etcd pki directory
+  ansible.builtin.file:
+    path: /etc/kubernetes/pki/etcd
+    state: directory
+    owner: root
+    group: root
+    mode: 0755

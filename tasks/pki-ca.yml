@@ -1,0 +1,76 @@
+---
+
+- name: generate CA privatekey
+  community.crypto.openssl_privatekey:
+    path: "files/k8s-{{ k8s_cluster_name }}/ca.key"
+    size: 2048
+- name: generate CA csr
+  community.crypto.openssl_csr:
+    path: "files/k8s-{{ k8s_cluster_name }}/ca.csr"
+    privatekey_path: "files/k8s-{{ k8s_cluster_name }}/ca.key"
+    common_name: kubernetes
+    use_common_name_for_san: false
+    basic_constraints:
+      - "CA:TRUE"
+    basic_constraints_critical: true
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+      - Certificate Sign
+    key_usage_critical: true
+- name: generate CA certificate
+  community.crypto.x509_certificate:
+    path: "files/k8s-{{ k8s_cluster_name }}/ca.crt"
+    privatekey_path: "files/k8s-{{ k8s_cluster_name }}/ca.key"
+    csr_path: "files/k8s-{{ k8s_cluster_name }}/ca.csr"
+    provider: selfsigned
+
+- name: generate front-proxy CA privatekey
+  community.crypto.openssl_privatekey:
+    path: "files/k8s-{{ k8s_cluster_name }}/front-proxy-ca.key"
+    size: 2048
+- name: generate front-proxy CA csr
+  community.crypto.openssl_csr:
+    path: "files/k8s-{{ k8s_cluster_name }}/front-proxy-ca.csr"
+    privatekey_path: "files/k8s-{{ k8s_cluster_name }}/front-proxy-ca.key"
+    common_name: front-proxy-ca
+    use_common_name_for_san: false
+    basic_constraints:
+      - "CA:TRUE"
+    basic_constraints_critical: true
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+      - Certificate Sign
+    key_usage_critical: true
+- name: generate front-proxy CA certificate
+  community.crypto.x509_certificate:
+    path: "files/k8s-{{ k8s_cluster_name }}/front-proxy-ca.crt"
+    privatekey_path: "files/k8s-{{ k8s_cluster_name }}/front-proxy-ca.key"
+    csr_path: "files/k8s-{{ k8s_cluster_name }}/front-proxy-ca.csr"
+    provider: selfsigned
+
+- name: generate etcd CA privatekey
+  community.crypto.openssl_privatekey:
+    path: "files/k8s-{{ k8s_cluster_name }}/etcd/ca.key"
+    size: 2048
+- name: generate etcd CA csr
+  community.crypto.openssl_csr:
+    path: "files/k8s-{{ k8s_cluster_name }}/etcd/ca.csr"
+    privatekey_path: "files/k8s-{{ k8s_cluster_name }}/etcd/ca.key"
+    common_name: etcd-ca
+    use_common_name_for_san: false
+    basic_constraints:
+      - "CA:TRUE"
+    basic_constraints_critical: true
+    key_usage:
+      - Digital Signature
+      - Key Encipherment
+      - Certificate Sign
+    key_usage_critical: true
+- name: generate etcd CA certificate
+  community.crypto.x509_certificate:
+    path: "files/k8s-{{ k8s_cluster_name }}/etcd/ca.crt"
+    privatekey_path: "files/k8s-{{ k8s_cluster_name }}/etcd/ca.key"
+    csr_path: "files/k8s-{{ k8s_cluster_name }}/etcd/ca.csr"
+    provider: selfsigned
